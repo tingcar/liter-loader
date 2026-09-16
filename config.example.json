@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "search": {
+    "year_from": 2021,
+    "year_to": 2026,
+    "max_results_per_source": 100,
+    "scope": "title_abstract",
+    "sources": {
+      "openalex": true,
+      "crossref": true,
+      "europepmc": true,
+      "pubmed": true,
+      "scopus": false,
+      "wos": false
+    },
+    "exclude_types": [
+      "editorial",
+      "commentary",
+      "news",
+      "conference abstract",
+      "patent"
+    ],
+    "prefer_oa_only": false,
+    "email": "",
+    "unpaywall_email": "",
+    "api_keys": {
+      "pubmed": "",
+      "scopus": "",
+      "wos": ""
+    }
+  },
+  "download": {
+    "output_root": "paperdown",
+    "timeout_seconds": 30,
+    "max_attempts_per_record": 4,
+    "delay_seconds": 0.6,
+    "concurrency": 2
+  },
+  "journal_match": {
+    "allow_abbrev_prefix": true,
+    "allow_fuzzy_tokens": true
+  },
+  "llm": {
+    "enabled": true,
+    "auto_expand": false,
+    "default_model": "deepseek-flash",
+    "timeout_seconds": 90,
+    "max_new_terms_per_group": 10,
+    "topic": "",
+    "language_hint": "以英文关键词为主（数据源以英文文献为主），必要时补充常见中文表达",
+    "providers": [
+      {
+        "name": "deepseek",
+        "type": "deepseek",
+        "base_url": "https://api.deepseek.com",
+        "api_key": ""
+      },
+      {
+        "name": "custom",
+        "type": "openai-compatible",
+        "base_url": "",
+        "api_key": ""
+      }
+    ],
+    "models": [
+      {
+        "name": "deepseek-flash",
+        "label": "DeepSeek Flash（快、便宜，推荐做关键词扩展）",
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "thinking": "disabled",
+        "json_mode": true,
+        "max_tokens": 2048,
+        "api_key": "",
+        "api_key_env": "DEEPSEEK_API_KEY"
+      },
+      {
+        "name": "deepseek-v4-pro",
+        "label": "DeepSeek V4 Pro（更强、更贵）",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro",
+        "thinking": "disabled",
+        "json_mode": true,
+        "max_tokens": 2048,
+        "api_key": ""
+      },
+      {
+        "name": "my-endpoint-model",
+        "label": "自建/其它厂商（OpenAI 兼容端点）",
+        "provider": "custom",
+        "model": "你的模型名",
+        "base_url": "https://your-endpoint.example.com/v1",
+        "json_mode": false,
+        "temperature": 0.3,
+        "max_tokens": 2048,
+        "api_key": "",
+        "thinking": "disabled"
+      }
+    ]
+  },
+  "journals": [
+    {
+      "name": "Science of the Total Environment",
+      "aliases": [
+        "Sci Total Environ",
+        "Sci. Total Environ.",
+        "STOTEN"
+      ],
+      "issn": [
+        "0048-9697",
+        "1879-1026"
+      ],
+      "impact_factor": "",
+      "jcr_quartile": "",
+      "metric_year": "",
+      "metric_source": "",
+      "indexing": "SCIE",
+      "note": "示例条目，请按自己的研究方向替换"
+    },
+    {
+      "name": "Journal of Cleaner Production",
+      "aliases": [
+        "J Clean Prod",
+        "J. Clean. Prod."
+      ],
+      "issn": [
+        "0959-6526",
+        "1879-1786"
+      ],
+      "impact_factor": "",
+      "jcr_quartile": "",
+      "metric_year": "",
+      "metric_source": "",
+      "indexing": "SCIE",
+      "note": "示例条目，请按自己的研究方向替换"
+    }
+  ]
+}

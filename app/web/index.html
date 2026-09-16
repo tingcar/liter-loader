@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文献下载器 · 网页版</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">文献下载器</span>
+    <span class="tag">期刊白名单检索 · 勾选下载 · 合法全文</span>
+  </div>
+  <div class="topactions">
+    <button class="primary" id="btn-llm-config">LLM配置</button>
+    <button class="ghost" id="btn-reload-config">重载配置</button>
+  </div>
+</header>
+
+<div class="compliance">
+  只检索并下载 <b>config.json 期刊白名单内</b> 的文献；只尝试开放获取与出版社直连全文，不绕过付费墙、不使用盗版来源。
+  遇到登录页 / 403 / 订阅页会如实标记为「平台限制直连下载」，并给出合法获取建议。
+</div>
+
+<main>
+  <section class="panel" id="panel-config">
+    <div class="panel-head">
+      <h2>① 检索配置（config.json + LLM）</h2>
+      <button class="ghost small" id="btn-toggle-config">收起</button>
+    </div>
+    <div id="config-body" class="panel-body">
+      <div class="muted">正在读取配置…</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>② 关键词检索</h2></div>
+    <div class="panel-body">
+      <label class="field wide">
+        <span>关键词（多个关键词用 <code>;</code> 分隔，同一概念的同义词用 <code>|</code> 分隔）</span>
+        <input id="input-keywords" type="text"
+               placeholder="例如：large language model|LLM|ChatGPT; environmental science|climate|sustainability">
+      </label>
+      <div class="row">
+        <label class="field"><span>检索范围（关键词匹配哪些字段）</span>
+          <select id="input-scope"></select>
+        </label>
+        <label class="field"><span>起始年份</span><input id="input-year-from" type="number" min="1900" max="2100"></label>
+        <label class="field"><span>结束年份</span><input id="input-year-to" type="number" min="1900" max="2100"></label>
+        <label class="field"><span>每源最多条数</span><input id="input-max" type="number" min="1" max="500" value="100"></label>
+      </div>
+      <div class="muted" id="scope-hint"></div>
+      <div class="row sources" id="source-toggles"></div>
+      <label class="checkline"><input id="input-oa-only" type="checkbox"> 只在有开放获取信号的文献中检索</label>
+
+      <div class="llm-box">
+        <div class="llm-head">
+          <b>AI 关键词扩展</b>
+          <span class="muted" id="llm-status">正在读取配置…</span>
+        </div>
+        <div class="row">
+          <label class="field"><span>使用的模型</span><select id="llm-model"></select></label>
+          <button class="ghost" id="btn-llm-test">测试模型连接</button>
+          <button class="ghost" id="btn-expand">AI 扩展关键词</button>
+          <label class="checkline"><input id="input-auto-expand" type="checkbox"> 每次检索自动扩展</label>
+        </div>
+        <div class="muted">
+          让模型为每个概念块补充 8-10 个同义词/变体，会参考上面选中的「检索范围」和期刊白名单所属的领域范围。
+          扩展结果先列出来，你可以逐条勾选或删除，确认后才用于检索。
+        </div>
+        <div id="expand-result"></div>
+      </div>
+
+      <div class="row actions">
+        <button class="primary" id="btn-search">开始检索</button>
+        <button class="ghost" id="btn-quick1">用示例关键词填入</button>
+        <span class="muted" id="search-status"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-results" hidden>
+    <div class="panel-head">
+      <h2>③ 检索结果（勾选后下载）</h2>
+      <span class="muted" id="result-meta"></span>
+    </div>
+    <div class="panel-body">
+      <div id="result-warnings"></div>
+      <div class="toolbar">
+        <label class="field"><span>优先级</span>
+          <select id="filter-priority">
+            <option value="">全部</option>
+            <option value="high">高优先级</option>
+            <option value="medium">中优先级</option>
+            <option value="low">低优先级</option>
+          </select>
+        </label>
+        <label class="field"><span>开放获取</span>
+          <select id="filter-oa">
+            <option value="">全部</option>
+            <option value="oa">仅有 OA 直连</option>
+            <option value="no-oa">仅无 OA 直连</option>
+          </select>
+        </label>
+        <label class="field"><span>关键字筛选</span>
+          <input id="filter-text" type="text" placeholder="题名 / 期刊 / DOI 包含…">
+        </label>
+        <div class="toolbar-actions">
+          <button class="ghost" id="btn-select-all">全选当前筛选</button>
+          <button class="ghost" id="btn-select-oa">只选开放获取</button>
+          <button class="ghost" id="btn-select-high">只选高优先级</button>
+          <button class="ghost" id="btn-clear">清空勾选</button>
+          <button class="primary" id="btn-download" disabled>下载文献</button>
+        </div>
+      </div>
+      <div class="tablewrap">
+        <table id="candidates-table">
+          <thead>
+            <tr>
+              <th class="col-check"><input type="checkbox" id="check-all"></th>
+              <th>#</th>
+              <th>题名 / 地址</th>
+              <th>年份</th>
+              <th>期刊</th>
+              <th>影响因子</th>
+              <th>分区</th>
+              <th>指标来源</th>
+              <th>DOI</th>
+              <th>来源库</th>
+              <th>白名单命中</th>
+              <th>关键词命中字段</th>
+              <th>优先级</th>
+              <th>全文状态</th>
+            </tr>
+          </thead>
+          <tbody id="candidates-body"></tbody>
+        </table>
+      </div>
+      <div class="muted" id="table-foot"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-download" hidden>
+    <div class="panel-head"><h2>④ 下载进度与交付文件</h2></div>
+    <div class="panel-body">
+      <div class="progress"><div class="bar" id="progress-bar"></div></div>
+      <div class="muted" id="progress-text">未开始</div>
+      <div class="stats" id="download-stats"></div>
+      <div id="deliverables" class="deliverables"></div>
+      <div id="download-files" class="papers"></div>
+      <div id="download-errors" class="errors"></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="config-modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>LLM 配置与检索渠道密钥</h3>
+      <button class="ghost small" id="btn-config-close">✕ 关闭</button>
+    </div>
+    <div class="modal-body">
+      <div class="muted">
+        这里填写的内容会写回本机 <code>config.json</code>（写前自动校验、并保留 <code>config.json.bak</code> 备份）。
+        出于安全考虑，界面<strong>不会回显已保存的明文密钥</strong>；留空则保持原值不变，填 <code>-</code> 可清空该项。
+      </div>
+      <div id="config-edit-message"></div>
+
+      <h4>1. 大模型（关键词扩展用）</h4>
+      <div id="config-model-rows"></div>
+      <div class="row">
+        <label class="field"><span>选择模型</span><select id="config-model-select"></select></label>
+        <label class="field wide"><span>该模型的 API key</span><input id="config-model-key" type="password" placeholder="留空=不改；填 - =清空"></label>
+      </div>
+      <div class="row">
+        <button class="ghost" id="btn-save-model-key">保存模型 key</button>
+        <button class="ghost" id="btn-test-current-model">测试该模型连接</button>
+        <span class="muted">测试会自动先保存输入框里的 key，结果直接显示在下面，不会关掉本窗口。</span>
+      </div>
+      <div id="config-test-result"></div>
+
+      <h4>2. 检索渠道密钥（Scopus / Web of Science，均按需填写）</h4>
+      <div class="muted">
+        这两个渠道是<strong>可选</strong>的：不填 key 也能正常使用其它四个免费渠道，只是这两个渠道会自动跳过并给出提示。
+      </div>
+      <div id="config-source-rows"></div>
+
+      <h4>3. 自建 / 其它厂商端点（OpenAI 兼容）</h4>
+      <div class="row">
+        <label class="field"><span>提供商名称</span><input id="config-provider-name" type="text" placeholder="例如 my-endpoint"></label>
+        <label class="field"><span>base_url</span><input id="config-provider-url" type="text" placeholder="例如 https://your-endpoint.example.com/v1"></label>
+        <label class="field wide"><span>API key</span><input id="config-provider-key" type="password" placeholder="留空=不改；填 - =清空"></label>
+      </div>
+      <div class="row">
+        <button class="ghost" id="btn-save-provider">保存提供商</button>
+      </div>
+
+      <div class="modal-foot">
+        <button class="primary" id="btn-config-done">完成并关闭</button>
+        <span class="muted">改完记得保存；点这里只是关掉弹窗。</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

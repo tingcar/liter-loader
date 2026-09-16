@@ -1,0 +1,13 @@
+#!/bin/sh
+# pre-commit 钩子：提交前拦住 API key 等敏感信息。
+# 由 `python scripts/install_git_hooks.py` 安装（也会生成一份 .ps1 版本给 Windows 用）。
+# 需要跳过时：git commit --no-verify
+
+python scripts/check_secrets.py --quiet || {
+    echo ""
+    echo "提交已中止：检测到可能泄露的敏感信息，或 .gitignore 缺少关键规则。"
+    echo "查看详情：python scripts/check_secrets.py"
+    echo "确认无碍可临时跳过：git commit --no-verify"
+    exit 1
+}
+exit 0

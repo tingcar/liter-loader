@@ -1,0 +1,29 @@
+# 统一换行与文本识别，避免跨平台提交出现整文件差异或二进制误判（与安全无关，但同样影响仓库整洁）
+* text=auto
+
+# 源码与文档统一用 LF
+*.py text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Windows 脚本保留 CRLF
+*.ps1 text eol=crlf
+
+# 二进制文件不做换行转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.woff binary
+*.woff2 binary
+
+# 显式声明「示例配置」是文本，提醒贡献者不要放真实密钥
+config.example.json text eol=lf
